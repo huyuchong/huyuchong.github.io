@@ -80,6 +80,87 @@
     <div class="outer">
       <section id="main">
   
+    <article id="post-Bestphp-WriteUp" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <h3 href="/2021/12/29/Bestphp-WriteUp/" class="article-date">
+  <time datetime="2021-12-29T08:10:35.000Z" itemprop="datePublished">2021-12-29</time>
+</h3>
+    
+  </div>
+  <div class="article-inner">
+  <div class="curve-down">
+  <div class="fill-content">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2021/12/29/Bestphp-WriteUp/">Bestphp_WriteUp</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        
+        <h2 id="知识点"><a href="#知识点" class="headerlink" title="知识点"></a>知识点</h2><h3 id="extract"><a href="#extract" class="headerlink" title="extract()"></a>extract()</h3><p><strong>定义和用法</strong></p>
+<p>extract() 函数从数组中将变量导入到当前的符号表。</p>
+<p>该函数使用数组键名作为变量名，使用数组键值作为变量值。针对数组中的每个元素，将在当前符号表中创建对应的一个变量。</p>
+<p>第二个参数 <em>type</em> 用于指定当某个变量已经存在，而数组中又有同名元素时，extract() 函数如何对待这样的冲突。</p>
+<p>该函数返回成功导入到符号表中的变量数目。默认情况下会覆盖已有的变量</p>
+<h2 id="做题过程"><a href="#做题过程" class="headerlink" title="做题过程"></a>做题过程</h2><p>这个题是我第一次把所有代码都看懂还是无从下手的题，是在<code>BMZCTF</code>平台上做的。</p>
+<p>访问题目给出的网址，直接就给出代码，还没有过这么好的待遇。</p>
+<p><img src="/Bestphp-WriteUp/1640765682457.png" alt="1640765682457"></p>
+<p>很简单的，函数基本都认识，三下五除二就搞定了</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    highlight_file(<span class="keyword">__FILE__</span>);   <span class="comment"># 高亮文本</span></span><br><span class="line">    error_reporting(<span class="number">0</span>);     <span class="comment"># 取消报错</span></span><br><span class="line">    ini_set(<span class="string">&#x27;open_basedir&#x27;</span>, <span class="string">&#x27;/var/www/html:/tmp&#x27;</span>);  <span class="comment"># 给open_basedir赋值/var/www/html:/tmp（做完才发现，这个是限定只能访问这两个目录）</span></span><br><span class="line">    <span class="variable">$file</span> = <span class="string">&#x27;function.php&#x27;</span>;</span><br><span class="line">    <span class="variable">$func</span> = <span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;function&#x27;</span>])?<span class="variable">$_GET</span>[<span class="string">&#x27;function&#x27;</span>]:<span class="string">&#x27;filters&#x27;</span>;   <span class="comment"># get传入了function值就为function传入的值，否则为filters</span></span><br><span class="line">    call_user_func(<span class="variable">$func</span>,<span class="variable">$_GET</span>);    <span class="comment"># 调用函数，参数为$_GET</span></span><br><span class="line">    <span class="keyword">include</span>(<span class="variable">$file</span>);		<span class="comment"># 引用file</span></span><br><span class="line">    session_start();	<span class="comment"># 启动session</span></span><br><span class="line">    <span class="variable">$_SESSION</span>[<span class="string">&#x27;name&#x27;</span>] = <span class="variable">$_POST</span>[<span class="string">&#x27;name&#x27;</span>];		<span class="comment"># session 重新赋值</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="variable">$_SESSION</span>[<span class="string">&#x27;name&#x27;</span>]==<span class="string">&#x27;admin&#x27;</span>)&#123;</span><br><span class="line">        header(<span class="string">&#x27;location:admin.php&#x27;</span>);		<span class="comment"># 跳转</span></span><br><span class="line">    &#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>很简单吧，就没什么不认识的函数，怎么做？不知道。</p>
+<p><code>call_user_func($func,$_GET)</code>这个东西看起来很不对劲，再根据前面的<code>$func</code>可以让我们自己去传入，这不就是我们可以执行任意的php函数吗?但是函数的参数跟<code>$_GET</code>又有什么关系？？？也赋值不过去吧。</p>
+<p>还是看了网上的教程，其实也是因为PHP不熟悉，不然就直接上手。</p>
+<p>通过<code>extract()</code>函数可以对变量重新赋值，即可以使用</p>
+<p><code>http://IP:port/index.php?function=extract&amp;file=index.php</code>去访问任意文件，通过伪协议，我们先后去访问<code>index.php,function.php,admin.php</code></p>
+<p><strong><code>index.php</code></strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">    highlight_file(<span class="keyword">__FILE__</span>);</span><br><span class="line">    error_reporting(<span class="number">0</span>);</span><br><span class="line">    ini_set(<span class="string">&#x27;open_basedir&#x27;</span>, <span class="string">&#x27;/var/www/html:/tmp&#x27;</span>);</span><br><span class="line">    <span class="variable">$file</span> = <span class="string">&#x27;function.php&#x27;</span>;</span><br><span class="line">    <span class="variable">$func</span> = <span class="keyword">isset</span>(<span class="variable">$_GET</span>[<span class="string">&#x27;function&#x27;</span>])?<span class="variable">$_GET</span>[<span class="string">&#x27;function&#x27;</span>]:<span class="string">&#x27;filters&#x27;</span>; </span><br><span class="line">    call_user_func(<span class="variable">$func</span>,<span class="variable">$_GET</span>);</span><br><span class="line">    <span class="keyword">include</span>(<span class="variable">$file</span>);</span><br><span class="line">    session_start();</span><br><span class="line">    <span class="variable">$_SESSION</span>[<span class="string">&#x27;name&#x27;</span>] = <span class="variable">$_POST</span>[<span class="string">&#x27;name&#x27;</span>];</span><br><span class="line">    <span class="keyword">if</span>(<span class="variable">$_SESSION</span>[<span class="string">&#x27;name&#x27;</span>]==<span class="string">&#x27;admin&#x27;</span>)&#123;</span><br><span class="line">        header(<span class="string">&#x27;location:admin.php&#x27;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong><code>function.php</code></strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">filters</span>(<span class="params"><span class="variable">$data</span></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">foreach</span>(<span class="variable">$data</span> <span class="keyword">as</span> <span class="variable">$key</span>=&gt;<span class="variable">$value</span>)&#123;</span><br><span class="line">        <span class="keyword">if</span>(preg_match(<span class="string">&#x27;/eval|assert|exec|passthru|glob|system|popen/i&#x27;</span>,<span class="variable">$value</span>))&#123;</span><br><span class="line">            <span class="keyword">die</span>(<span class="string">&#x27;Do not hack me!&#x27;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong><code>admin.php</code></strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">if</span>(<span class="keyword">empty</span>(<span class="variable">$_SESSION</span>[<span class="string">&#x27;name&#x27;</span>]))&#123;</span><br><span class="line">    session_start();</span><br><span class="line">    <span class="comment">#echo &#x27;hello &#x27; + $_SESSION[&#x27;name&#x27;];</span></span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">    <span class="keyword">die</span>(<span class="string">&#x27;you must login with admin&#x27;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>经过尝试，发现没有办法去进行一个利用。这个时候，没错，还是网上教我的：</p>
+<p>session_start()可以中的save_path可以更改保存路径，而 <code>$_SESSION[&#39;name&#39;] = $_POST[&#39;name&#39;];</code> 刚好可以让我们修改session内容，这样就形成了一个文件上传漏洞。</p>
+<p>session的保存路径是<code>sess_id</code>，id可以在本地保存的cookie中看到：</p>
+<p><img src="/Bestphp-WriteUp/1640767478528.png" alt="1640767478528"></p>
+<p>利用hackbar工具去传入参数,修改保存路径,name中写入执行的系统命令：</p>
+<p><img src="/Bestphp-WriteUp/1640767518312.png" alt="1640767518312"></p>
+<p>再通过extract()去查看执行效果。</p>
+<p><img src="/Bestphp-WriteUp/1640767634113.png" alt="1640767634113"></p>
+<p>打印flag：</p>
+<p><img src="/Bestphp-WriteUp/1640767676919.png" alt="1640767676919"></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <div class="article-footer-content">
+        
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CTF/" rel="tag">CTF</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PHP%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" rel="tag">PHP代码审计</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Web/" rel="tag">Web</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB/" rel="tag">文件包含</a></li></ul>
+
+        <a data-url="http://example.com/2021/12/29/Bestphp-WriteUp/" data-id="ckxraqamg0000iovj02g088xu" class="article-share-link">分享到</a>
+        
+      </div>
+    </footer>
+  </div>
+  </div>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-（BUUCTF）PWN-RIP-write-up" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <h3 href="/2021/12/24/%EF%BC%88BUUCTF%EF%BC%89PWN-RIP-write-up/" class="article-date">
@@ -976,6 +1057,10 @@
       <ul>
         
           <li>
+            <a href="/2021/12/29/Bestphp-WriteUp/">Bestphp_WriteUp</a>
+          </li>
+        
+          <li>
             <a href="/2021/12/24/%EF%BC%88BUUCTF%EF%BC%89PWN-RIP-write-up/">（BUUCTF）PWN_RIP write_up</a>
           </li>
         
@@ -991,10 +1076,6 @@
             <a href="/2021/12/23/%E3%80%90NISP%E4%B8%80%E7%BA%A7%E3%80%91-1-2-%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E6%B3%95%E5%BE%8B%E6%B3%95%E8%A7%84/">【NISP一级】1.2 网络安全法律法规</a>
           </li>
         
-          <li>
-            <a href="/2021/12/23/%E3%80%90NISP%E4%B8%80%E7%BA%A7%E3%80%91-1-1%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8%E4%B8%8E%E7%BD%91%E7%BB%9C%E7%A9%BA%E9%97%B4%E5%AE%89%E5%85%A8/">【NISP一级】 1.1信息安全与网络空间安全</a>
-          </li>
-        
       </ul>
     </div>
   </div>
@@ -1004,7 +1085,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/NISP/" rel="tag">NISP</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pwn/" rel="tag">pwn</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A0%88%E6%BA%A2%E5%87%BA/" rel="tag">栈溢出</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%B6%E5%9C%BA/" rel="tag">靶场</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CTF/" rel="tag">CTF</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NISP/" rel="tag">NISP</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PHP%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" rel="tag">PHP代码审计</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web/" rel="tag">Web</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pwn/" rel="tag">pwn</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB/" rel="tag">文件包含</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%A0%88%E6%BA%A2%E5%87%BA/" rel="tag">栈溢出</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%B6%E5%9C%BA/" rel="tag">靶场</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -1013,7 +1094,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">8</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/12/">十二月 2021</a><span class="archive-list-count">9</span></li></ul>
     </div>
   </div>
 
